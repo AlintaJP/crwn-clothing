@@ -1,8 +1,14 @@
-import firebase from "firebase/app";
-import "firebase/firestore";
-import "firebase/auth";
+import { initializeApp } from "firebase/app";
+import {
+  getAuth,
+  signInWithPopup,
+  GoogleAuthProvider,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+} from "firebase/auth";
+import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 
-const config = {
+const firebaseConfig = {
   apiKey: "AIzaSyARWi3PPsa0G3QKhymFJnBRD5HwVi1FQzc",
   authDomain: "crwn-db-b5022.firebaseapp.com",
   projectId: "crwn-db-b5022",
@@ -11,13 +17,46 @@ const config = {
   appId: "1:504210673134:web:d4361f9b0641da110dd2ff",
 };
 
-firebase.initializeApp(config);
+initializeApp(firebaseConfig);
+export const db = getFirestore();
+export const auth = getAuth();
 
-export const auth = firebase.auth();
-export const firestore = firebase.firestore();
-
-const provider = new firebase.auth.GoogleAuthProvider();
+const provider = new GoogleAuthProvider();
 provider.setCustomParameters({ prompt: "select_account" });
-export const signInWithGoogle = () => auth.signInWithPopup(provider);
+export const signInWithGoogle = () => signInWithPopup(auth, provider);
 
-export default firebase;
+export const createUserProfileDocument = async (userAuth, additionalData) => {
+  if (!userAuth) return;
+
+  const userRef = doc(db, `users/${userAuth.uid}`);
+
+  const snapShot = await getDoc(userRef);
+
+  if (!snapShot.exists()) {
+    const { displayName, email } = userAuth;
+    const createdAt = new Date();
+
+    try {
+      await setDoc(userRef, {
+        displayName,
+        email,
+        createdAt,
+        ...additionalData,
+      });
+    } catch (error) {
+      console.error(error.message);
+    }
+  }
+
+  return userRef;
+};
+
+export const signUp = async (email, password, displayName) => {
+  const { user } = await createUserWithEmailAndPassword(auth, email, password);
+
+  await createUserProfileDocument(user, { displayName });
+};
+
+export const signIn = async (email, password) => {
+  await signInWithEmailAndPassword(auth, email, password);
+};

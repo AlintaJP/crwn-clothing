@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 
 import { auth } from "../../firebase/firebase.utils";
+import { signOut } from "firebase/auth";
 
 import { ReactComponent as Logo } from "../../assets/crown.svg";
 
@@ -20,7 +21,7 @@ const Header = ({ currentUser }) => (
         CONTACT
       </Link>
       {currentUser ? (
-        <div className="option" onClick={() => auth.signOut()}>
+        <div className="option" onClick={() => signOut(auth)}>
           SIGN OUT
         </div>
       ) : (
